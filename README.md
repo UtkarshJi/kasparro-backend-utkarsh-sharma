@@ -1,15 +1,33 @@
 # Kasparro Backend & ETL System
 
-A production-grade backend ETL system with multi-source data ingestion, RESTful API, and comprehensive observability.
+A production-grade backend ETL system for cryptocurrency data with multi-source ingestion, RESTful API, and cloud deployment.
+
+## 🌐 Live Demo
+
+**API:** https://kasparro-api-18sg.onrender.com
+
+| Endpoint | URL |
+|----------|-----|
+| Health | https://kasparro-api-18sg.onrender.com/health |
+| Data | https://kasparro-api-18sg.onrender.com/data?limit=10 |
+| Stats | https://kasparro-api-18sg.onrender.com/stats |
+| Docs | https://kasparro-api-18sg.onrender.com/docs |
 
 ## 🚀 Quick Start
 
 ```bash
+# Clone repository
+git clone https://github.com/UtkarshJi/kasparro-backend-utkarsh-sharma.git
+cd kasparro-backend-utkarsh-sharma
+
 # Start all services
 make up
 
 # Run tests
 make test
+
+# View logs
+make logs
 
 # Stop services
 make down
@@ -17,69 +35,106 @@ make down
 
 ## 📋 Features
 
-### P0 - Foundation
-- ✅ Multi-source ETL (API + CSV)
-- ✅ PostgreSQL storage (raw + normalized)
-- ✅ Pydantic validation
-- ✅ Incremental ingestion
-- ✅ RESTful API with pagination & filtering
-- ✅ Health endpoint with DB/ETL status
+### Data Sources
+- **CoinPaprika API** - Cryptocurrency ticker data (2000+ coins)
+- **CoinGecko API** - Market data with prices and rankings
+- **CSV** - Product data ingestion
 
-### P1 - Growth
-- ✅ Third data source (RSS feed)
-- ✅ Checkpoint-based resume
-- ✅ Idempotent writes
-- ✅ /stats endpoint
-- ✅ Comprehensive tests
+### P0 - Foundation ✅
+- Multi-source ETL (CoinPaprika + CoinGecko + CSV)
+- PostgreSQL storage (raw + normalized)
+- Pydantic validation with type cleaning
+- Incremental ingestion with checkpoints
+- RESTful API with pagination & filtering
+- Health endpoint with DB/ETL status
 
-### P2 - Differentiator
-- ✅ Schema drift detection
-- ✅ Failure injection & recovery
-- ✅ Rate limiting with backoff
-- ✅ Prometheus metrics
-- ✅ Structured JSON logging
-- ✅ Run comparison endpoints
+### P1 - Growth ✅
+- Third data source (CSV)
+- Checkpoint-based resume on failure
+- Idempotent writes (upserts)
+- `/stats` endpoint with analytics
+- Comprehensive test suite (61 tests)
+
+### P2 - Differentiator ✅
+- Schema drift detection with fuzzy matching
+- Failure recovery with checkpoints
+- Rate limiting with exponential backoff
+- Prometheus metrics (`/metrics`)
+- Structured JSON logging
+- Run comparison endpoints
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│    API Source   │    │   CSV Source    │    │   RSS Source    │
-└────────┬────────┘    └────────┬────────┘    └────────┬────────┘
-         │                      │                      │
-         └──────────────────────┼──────────────────────┘
-                                │
-                    ┌───────────▼───────────┐
-                    │    ETL Pipeline       │
-                    │  - Fetch             │
-                    │  - Validate          │
-                    │  - Transform         │
-                    │  - Load              │
-                    └───────────┬───────────┘
-                                │
-                    ┌───────────▼───────────┐
-                    │      PostgreSQL       │
-                    │  - raw_api_data      │
-                    │  - raw_csv_data      │
-                    │  - raw_rss_data      │
-                    │  - unified_data      │
-                    │  - etl_checkpoints   │
-                    │  - etl_runs          │
-                    └───────────┬───────────┘
-                                │
-                    ┌───────────▼───────────┐
-                    │      FastAPI          │
-                    │  GET /data            │
-                    │  GET /health          │
-                    │  GET /stats           │
-                    │  GET /metrics         │
-                    └───────────────────────┘
+┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐
+│   CoinPaprika     │  │    CoinGecko      │  │       CSV         │
+│   (API 1)         │  │    (API 2)        │  │    (Products)     │
+└─────────┬─────────┘  └─────────┬─────────┘  └─────────┬─────────┘
+          │                      │                      │
+          └──────────────────────┼──────────────────────┘
+                                 │
+                     ┌───────────▼───────────┐
+                     │    ETL Pipeline       │
+                     │  • Fetch with retry   │
+                     │  • Validate (Pydantic)│
+                     │  • Transform          │
+                     │  • Upsert to DB       │
+                     └───────────┬───────────┘
+                                 │
+                     ┌───────────▼───────────┐
+                     │      PostgreSQL       │
+                     │  • raw_api_data       │
+                     │  • raw_csv_data       │
+                     │  • unified_data       │
+                     │  • etl_checkpoints    │
+                     │  • etl_runs           │
+                     └───────────┬───────────┘
+                                 │
+                     ┌───────────▼───────────┐
+                     │       FastAPI         │
+                     │  GET /data            │
+                     │  GET /health          │
+                     │  GET /stats           │
+                     │  GET /metrics         │
+                     │  POST /api/etl/trigger│
+                     └───────────────────────┘
+```
+
+## 📡 API Endpoints
+
+### GET /health
+Health check with DB and ETL status.
+```bash
+curl https://kasparro-api-18sg.onrender.com/health
+```
+
+### GET /data
+Fetch cryptocurrency data with pagination and filtering.
+```bash
+curl "https://kasparro-api-18sg.onrender.com/data?limit=10&source=coinpaprika"
+```
+
+### GET /stats
+ETL run statistics and per-source breakdowns.
+```bash
+curl https://kasparro-api-18sg.onrender.com/stats
+```
+
+### GET /metrics
+Prometheus-format metrics.
+```bash
+curl https://kasparro-api-18sg.onrender.com/metrics
+```
+
+### POST /api/etl/trigger
+Manually trigger ETL run.
+```bash
+curl -X POST https://kasparro-api-18sg.onrender.com/api/etl/trigger
 ```
 
 ## 🔧 Configuration
 
-Copy `.env.example` to `.env` and configure:
-
+Copy `.env.example` to `.env`:
 ```bash
 cp .env.example .env
 ```
@@ -88,52 +143,23 @@ cp .env.example .env
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://...` |
-| `API_KEY` | External API authentication key | Required |
+| `DATABASE_URL` | PostgreSQL connection string | Auto-converted for asyncpg |
+| `COINPAPRIKA_API_KEY` | Optional API key | Not required |
 | `ETL_INTERVAL_MINUTES` | ETL run frequency | `5` |
+| `ETL_BATCH_SIZE` | Records per batch | `50` |
 | `LOG_LEVEL` | Logging level | `INFO` |
-
-## 📡 API Endpoints
-
-### GET /health
-Health check with DB and ETL status.
-
-```bash
-curl http://localhost:8000/health
-```
-
-### GET /data
-Fetch normalized data with pagination and filtering.
-
-```bash
-curl "http://localhost:8000/data?limit=10&offset=0&source=api"
-```
-
-### GET /stats
-ETL run statistics and summaries.
-
-```bash
-curl http://localhost:8000/stats
-```
-
-### GET /metrics
-Prometheus-format metrics.
-
-```bash
-curl http://localhost:8000/metrics
-```
 
 ## 🧪 Testing
 
 ```bash
-# Run all tests
+# Run all tests (61 tests)
 make test
 
 # Run with coverage
 make test-coverage
 
 # Run specific test file
-docker-compose run --rm api pytest tests/test_api/ -v
+docker compose run --rm api pytest tests/test_etl/ -v
 ```
 
 ## 📁 Project Structure
@@ -145,12 +171,16 @@ kasparro_backend/
 │   └── dependencies.py     # Shared dependencies
 ├── ingestion/              # ETL pipeline
 │   ├── sources/            # Data source connectors
+│   │   ├── coinpaprika_source.py
+│   │   ├── coingecko_source.py
+│   │   └── csv_source.py
 │   └── pipeline.py         # Orchestration
 ├── services/               # Business logic
+│   ├── rate_limiter.py     # Token bucket
+│   └── schema_drift.py     # Drift detection
 ├── schemas/                # Pydantic models
 ├── core/                   # Configuration
-├── tests/                  # Test suite
-├── migrations/             # Database migrations
+├── tests/                  # Test suite (61 tests)
 └── data/                   # Sample CSV files
 ```
 
@@ -159,10 +189,30 @@ kasparro_backend/
 ### Local Docker
 ```bash
 make up
+# API available at http://localhost:8000
 ```
 
-### AWS Deployment
-See `docs/deployment.md` for AWS ECS deployment guide.
+### Cloud (Render)
+The application is deployed on Render with:
+- PostgreSQL database
+- Docker web service
+- Auto-deploy from GitHub
+- Scheduled ETL every 5 minutes
+
+## 📊 Tech Stack
+
+- **Framework:** FastAPI
+- **Database:** PostgreSQL + SQLAlchemy (async)
+- **ETL:** Custom pipeline with APScheduler
+- **Validation:** Pydantic
+- **Testing:** Pytest (61 tests)
+- **Logging:** Structlog (JSON format)
+- **Metrics:** Prometheus
+- **Container:** Docker + Docker Compose
+
+## 👤 Author
+
+**Utkarsh Sharma**
 
 ## 📄 License
 
