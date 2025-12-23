@@ -81,6 +81,20 @@ class Settings(BaseSettings):
     app_name: str = Field(default="Kasparro Backend", description="Application name")
     debug: bool = Field(default=False, description="Debug mode")
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def convert_database_url_to_asyncpg(cls, v: str) -> str:
+        """Convert postgres:// URLs to postgresql+asyncpg:// for async SQLAlchemy.
+        
+        Render and other cloud providers use postgres:// format, but asyncpg needs
+        the postgresql+asyncpg:// prefix.
+        """
+        if v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif v.startswith("postgresql://") and "+asyncpg" not in v:
+            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return v
+
     @field_validator("api_key")
     @classmethod
     def validate_api_key(cls, v: str) -> str:
@@ -93,3 +107,4 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Get cached settings instance."""
     return Settings()
+
