@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: kasparro_db
+    environment:
+      POSTGRES_USER: kasparro
+      POSTGRES_PASSWORD: kasparro_secret
+      POSTGRES_DB: kasparro
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U kasparro -d kasparro" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kasparro_network
+
+  # Kasparro API + ETL Service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kasparro_api
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://kasparro:kasparro_secret@db:5432/kasparro
+      - DATABASE_URL_SYNC=postgresql://kasparro:kasparro_secret@db:5432/kasparro
+      # CoinPaprika API key (optional for higher rate limits)
+      - API_KEY=${COINPAPRIKA_API_KEY:-}
+      - ETL_INTERVAL_MINUTES=5
+      - ETL_BATCH_SIZE=50
+      # Lower rate limits for free tier APIs
+      - RATE_LIMIT_REQUESTS_PER_MINUTE=30
+      - RATE_LIMIT_BURST=5
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+    volumes:
+      - ./data:/app/data:ro
+    networks:
+      - kasparro_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+
+networks:
+  kasparro_network:
+    driver: bridge

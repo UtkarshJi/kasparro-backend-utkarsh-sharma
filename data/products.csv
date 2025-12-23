@@ -1,0 +1,26 @@
+product_id,name,category,price,description,stock_quantity,created_at
+PROD001,Wireless Bluetooth Headphones,Electronics,79.99,Premium noise-canceling headphones with 30-hour battery life,150,2024-01-15
+PROD002,Organic Green Tea,Beverages,12.99,100 organic green tea bags from Japan,500,2024-02-01
+PROD003,Running Shoes Pro,Sports,129.99,Professional running shoes with advanced cushioning,75,2024-01-20
+PROD004,Stainless Steel Water Bottle,Kitchen,24.99,1L insulated water bottle keeps drinks cold for 24 hours,300,2024-02-10
+PROD005,Yoga Mat Premium,Sports,45.99,Non-slip yoga mat with carrying strap,200,2024-01-25
+PROD006,Mechanical Keyboard,Electronics,149.99,RGB mechanical keyboard with Cherry MX switches,100,2024-02-05
+PROD007,Coffee Maker Deluxe,Kitchen,89.99,12-cup programmable coffee maker with thermal carafe,80,2024-01-18
+PROD008,Protein Powder Vanilla,Health,34.99,2lb whey protein powder 25g protein per serving,250,2024-02-08
+PROD009,Wireless Mouse,Electronics,39.99,Ergonomic wireless mouse with silent clicks,400,2024-01-22
+PROD010,Plant-Based Cookbook,Books,19.99,100 delicious plant-based recipes for healthy living,150,2024-02-12
+PROD011,Resistance Bands Set,Sports,29.99,Set of 5 resistance bands with different tensions,350,2024-01-28
+PROD012,LED Desk Lamp,Home,49.99,Adjustable LED desk lamp with USB charging port,120,2024-02-03
+PROD013,Organic Honey,Food,18.99,Raw unfiltered organic honey 16oz jar,180,2024-01-30
+PROD014,Wireless Earbuds,Electronics,99.99,True wireless earbuds with active noise cancellation,90,2024-02-14
+PROD015,Cast Iron Skillet,Kitchen,54.99,12-inch pre-seasoned cast iron skillet,60,2024-01-12
+PROD016,Vitamin D3 Supplements,Health,14.99,365 vitamin D3 softgels 5000 IU,400,2024-02-06
+PROD017,Hiking Backpack,Sports,79.99,40L waterproof hiking backpack with rain cover,85,2024-01-16
+PROD018,Electric Toothbrush,Personal Care,69.99,Rechargeable electric toothbrush with 4 brush heads,200,2024-02-09
+PROD019,Bamboo Cutting Board,Kitchen,32.99,Large bamboo cutting board with juice groove,175,2024-01-24
+PROD020,Noise Machine,Home,39.99,White noise machine with 20 soothing sounds,110,2024-02-11
+PROD021,Espresso Maker,Kitchen,199.99,Semi-automatic espresso machine with milk frother,45,2024-01-14
+PROD022,Fitness Tracker,Electronics,129.99,Advanced fitness tracker with heart rate and GPS,130,2024-02-02
+PROD023,Organic Almonds,Food,24.99,2lb bag of raw organic almonds,220,2024-01-26
+PROD024,Memory Foam Pillow,Home,44.99,Contour memory foam pillow for neck support,160,2024-02-07
+PROD025,Jump Rope,Sports,15.99,Speed jump rope with adjustable length,500,2024-01-19
