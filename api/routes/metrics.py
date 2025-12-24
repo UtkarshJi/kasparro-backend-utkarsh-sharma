@@ -5,7 +5,7 @@ from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, ge
 from sqlalchemy import func, select
 
 from api.dependencies import DbSession
-from core.models import ETLRun, ETLStatus, UnifiedData
+from core.models import ETLRun, UnifiedData
 
 router = APIRouter(tags=["Metrics"])
 

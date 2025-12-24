@@ -24,7 +24,6 @@ from ingestion.sources import (
     CoinPaprikaSource,
     CoinGeckoSource,
     CsvSource,
-    RssSource,
 )
 from schemas.etl import UnifiedDataInput
 

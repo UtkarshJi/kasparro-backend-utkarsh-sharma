@@ -1,7 +1,6 @@
 """Tests for data source connectors."""
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from ingestion.sources.api_source import ApiSource
 from ingestion.sources.csv_source import CsvSource

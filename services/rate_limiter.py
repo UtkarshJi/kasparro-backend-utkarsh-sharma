@@ -212,7 +212,7 @@ def with_rate_limit(source: str):
                 result = await func(*args, **kwargs)
                 limiter.reset_errors(source)
                 return result
-            except Exception as e:
+            except Exception:
                 limiter.record_error(source)
                 raise
 

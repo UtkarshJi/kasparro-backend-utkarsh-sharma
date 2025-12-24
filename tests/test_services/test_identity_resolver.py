@@ -1,7 +1,5 @@
 """Tests for identity resolution service."""
 
-import pytest
-
 from services.identity_resolver import IdentityResolver, get_identity_resolver
 
 
