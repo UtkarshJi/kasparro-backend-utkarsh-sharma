@@ -1,6 +1,6 @@
 # Kasparro Backend & ETL System
 
-A production-grade backend ETL system for cryptocurrency data with multi-source ingestion, RESTful API, and cloud deployment.
+A production-grade backend ETL system for cryptocurrency data with multi-source ingestion, **identity unification**, RESTful API, and cloud deployment.
 
 ## 🌐 Live Demo
 
@@ -40,6 +40,12 @@ make down
 - **CoinGecko API** - Market data with prices and rankings
 - **CSV** - Product data ingestion
 
+### 🔗 Identity Unification (NEW)
+Same cryptocurrency from different sources (CoinPaprika + CoinGecko) is **unified into a single record** using symbol-based canonical IDs:
+- Bitcoin from both sources → `canonical_id='btc'` → **1 unified record**
+- No duplicate entries for the same coin
+- Cross-source data merging
+
 ### P0 - Foundation ✅
 - Multi-source ETL (CoinPaprika + CoinGecko + CSV)
 - PostgreSQL storage (raw + normalized)
@@ -53,9 +59,10 @@ make down
 - Checkpoint-based resume on failure
 - Idempotent writes (upserts)
 - `/stats` endpoint with analytics
-- Comprehensive test suite (61 tests)
+- Comprehensive test suite (76 tests)
 
 ### P2 - Differentiator ✅
+- **Identity unification** across data sources
 - Schema drift detection with fuzzy matching
 - Failure recovery with checkpoints
 - Rate limiting with exponential backoff
@@ -78,14 +85,15 @@ make down
                      │  • Fetch with retry   │
                      │  • Validate (Pydantic)│
                      │  • Transform          │
-                     │  • Upsert to DB       │
+                     │  • Identity Resolver  │ ← Generates canonical_id
+                     │  • Upsert by canon_id │ ← Merges same coins
                      └───────────┬───────────┘
                                  │
                      ┌───────────▼───────────┐
                      │      PostgreSQL       │
                      │  • raw_api_data       │
                      │  • raw_csv_data       │
-                     │  • unified_data       │
+                     │  • unified_data       │ ← canonical_id unique
                      │  • etl_checkpoints    │
                      │  • etl_runs           │
                      └───────────┬───────────┘
@@ -152,7 +160,7 @@ cp .env.example .env
 ## 🧪 Testing
 
 ```bash
-# Run all tests (61 tests)
+# Run all tests (76 tests)
 make test
 
 # Run with coverage
@@ -176,11 +184,12 @@ kasparro_backend/
 │   │   └── csv_source.py
 │   └── pipeline.py         # Orchestration
 ├── services/               # Business logic
+│   ├── identity_resolver.py # Cross-source ID unification
 │   ├── rate_limiter.py     # Token bucket
 │   └── schema_drift.py     # Drift detection
 ├── schemas/                # Pydantic models
 ├── core/                   # Configuration
-├── tests/                  # Test suite (61 tests)
+├── tests/                  # Test suite (76 tests)
 └── data/                   # Sample CSV files
 ```
 
@@ -198,14 +207,16 @@ The application is deployed on Render with:
 - Docker web service
 - Auto-deploy from GitHub
 - Scheduled ETL every 5 minutes
+- Automatic schema migration
 
 ## 📊 Tech Stack
 
 - **Framework:** FastAPI
 - **Database:** PostgreSQL + SQLAlchemy (async)
 - **ETL:** Custom pipeline with APScheduler
+- **Identity Unification:** Symbol-based canonical IDs
 - **Validation:** Pydantic
-- **Testing:** Pytest (61 tests)
+- **Testing:** Pytest (76 tests)
 - **Logging:** Structlog (JSON format)
 - **Metrics:** Prometheus
 - **Container:** Docker + Docker Compose
@@ -217,3 +228,4 @@ The application is deployed on Render with:
 ## 📄 License
 
 MIT
+
