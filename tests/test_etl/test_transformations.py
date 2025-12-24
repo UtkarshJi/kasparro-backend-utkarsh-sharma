@@ -158,6 +158,8 @@ class TestUnifiedDataInput:
         data = UnifiedDataInput(
             source="api",
             source_id="123",
+            canonical_id="api_post_123",  # Required for identity unification
+            symbol=None,
             title="Test Title",
             content="Test content",
             author="Author",
@@ -170,6 +172,7 @@ class TestUnifiedDataInput:
 
         assert data.source == "api"
         assert data.source_id == "123"
+        assert data.canonical_id == "api_post_123"
         assert data.extra_data["key"] == "value"
 
     def test_optional_fields_none(self):
@@ -177,9 +180,12 @@ class TestUnifiedDataInput:
         data = UnifiedDataInput(
             source="csv",
             source_id="456",
+            canonical_id="product_456",  # Required for identity unification
             checksum="def456",
         )
 
         assert data.title is None
         assert data.content is None
         assert data.author is None
+        assert data.canonical_id == "product_456"
+

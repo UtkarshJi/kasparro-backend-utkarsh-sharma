@@ -115,10 +115,15 @@ class CsvSource(BaseSource[CsvProductSchema]):
         return CsvProductSchema.model_validate(clean_record)
 
     def transform(self, validated_record: CsvProductSchema) -> UnifiedDataInput:
-        """Transform CSV record to unified schema."""
+        """Transform CSV record to unified schema with identity resolution."""
+        # For CSV products, use product_id as canonical ID
+        canonical_id = f"product_{validated_record.product_id}"
+        
         return UnifiedDataInput(
             source=self.source_type,
             source_id=validated_record.product_id,
+            canonical_id=canonical_id,
+            symbol=None,  # Not applicable for products
             title=validated_record.name,
             content=validated_record.description,
             author=None,

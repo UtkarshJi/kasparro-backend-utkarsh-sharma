@@ -15,6 +15,7 @@ from core.config import get_settings
 from core.logging import get_logger
 from ingestion.sources.base import BaseSource, FetchResult, SourceConfig
 from schemas.etl import CoinPaprikaSchema, UnifiedDataInput
+from services.identity_resolver import get_identity_resolver
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -35,6 +36,7 @@ class CoinPaprikaSource(BaseSource[CoinPaprikaSchema]):
             )
         super().__init__(config)
         self.api_key = settings.api_key
+        self.identity_resolver = get_identity_resolver()
 
     @property
     def source_type(self) -> str:
@@ -125,13 +127,23 @@ class CoinPaprikaSource(BaseSource[CoinPaprikaSchema]):
         return CoinPaprikaSchema.model_validate(record)
 
     def transform(self, validated_record: CoinPaprikaSchema) -> UnifiedDataInput:
-        """Transform CoinPaprika record to unified schema."""
+        """Transform CoinPaprika record to unified schema with identity resolution."""
         # Extract price info from quotes
         usd_quote = validated_record.quotes.get("USD", {}) if validated_record.quotes else {}
+        
+        # Generate canonical ID for identity unification
+        canonical_id = self.identity_resolver.get_canonical_id(
+            source=self.source_type,
+            source_id=validated_record.id,
+            symbol=validated_record.symbol,
+            name=validated_record.name,
+        )
         
         return UnifiedDataInput(
             source=self.source_type,
             source_id=validated_record.id,
+            canonical_id=canonical_id,  # Enables cross-source unification
+            symbol=validated_record.symbol.lower(),
             title=validated_record.name,
             content=f"{validated_record.symbol} - Rank #{validated_record.rank}",
             author=None,
@@ -149,6 +161,7 @@ class CoinPaprikaSource(BaseSource[CoinPaprikaSchema]):
                 "circulating_supply": validated_record.circulating_supply,
                 "total_supply": validated_record.total_supply,
                 "max_supply": validated_record.max_supply,
+                "_source": "coinpaprika",  # Track data source
             },
             checksum=self.compute_checksum(validated_record.model_dump()),
         )
@@ -156,3 +169,4 @@ class CoinPaprikaSource(BaseSource[CoinPaprikaSchema]):
     def get_checkpoint_value(self, record: dict[str, Any]) -> str:
         """Extract coin ID as checkpoint value."""
         return record.get("id", "")
+

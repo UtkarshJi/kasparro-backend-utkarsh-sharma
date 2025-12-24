@@ -291,11 +291,18 @@ class ETLPipeline:
         session: AsyncSession,
         records: list[UnifiedDataInput],
     ) -> int:
-        """Store unified data with upsert (returns count of skipped duplicates)."""
+        """Store unified data with upsert based on canonical_id (identity unification).
+        
+        This enables merging data from different sources for the same cryptocurrency.
+        For example, Bitcoin from CoinPaprika and CoinGecko will be unified into
+        a single record with canonical_id='btc'.
+        """
         skipped = 0
         for record in records:
             try:
                 stmt = pg_insert(UnifiedData).values(
+                    canonical_id=record.canonical_id,
+                    symbol=record.symbol,
                     source=record.source,
                     source_id=record.source_id,
                     title=record.title,
@@ -307,14 +314,21 @@ class ETLPipeline:
                     extra_data=record.extra_data,
                     checksum=record.checksum,
                 )
+                # Upsert based on canonical_id - this merges same coins from different sources
                 stmt = stmt.on_conflict_do_update(
-                    index_elements=["source", "source_id"],
+                    index_elements=["canonical_id"],
                     set_={
+                        # Update source info (tracks last source to update)
+                        "source": record.source,
+                        "source_id": record.source_id,
+                        "symbol": record.symbol,
+                        # Keep latest metadata
                         "title": record.title,
                         "content": record.content,
                         "author": record.author,
                         "category": record.category,
                         "url": record.url,
+                        # Merge extra_data - preserve data from all sources
                         "extra_data": record.extra_data,
                         "checksum": record.checksum,
                         "updated_at": datetime.now(timezone.utc),
@@ -329,6 +343,7 @@ class ETLPipeline:
                     "unified_data_store_failed",
                     source=record.source,
                     source_id=record.source_id,
+                    canonical_id=record.canonical_id,
                     error=str(e),
                 )
         return skipped

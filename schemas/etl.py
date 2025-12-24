@@ -169,10 +169,17 @@ class RssEntrySchema(BaseETLSchema):
 
 
 class UnifiedDataInput(BaseModel):
-    """Schema for creating unified data records."""
+    """Schema for creating unified data records.
+    
+    The canonical_id field enables identity unification - the same cryptocurrency
+    from different sources (CoinPaprika, CoinGecko) will share the same canonical_id,
+    allowing them to be merged into a single unified record.
+    """
 
     source: str
     source_id: str
+    canonical_id: str  # Normalized identifier for cross-source matching (e.g., "btc")
+    symbol: Optional[str] = None  # Original symbol from source
     title: Optional[str] = None
     content: Optional[str] = None
     author: Optional[str] = None
@@ -181,6 +188,7 @@ class UnifiedDataInput(BaseModel):
     external_created_at: Optional[datetime] = None
     extra_data: Optional[dict[str, Any]] = None
     checksum: str
+
 
 
 # =============================================================================

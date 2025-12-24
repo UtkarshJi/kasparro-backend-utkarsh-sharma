@@ -147,13 +147,21 @@ class RssSource(BaseSource[RssEntrySchema]):
         return RssEntrySchema.model_validate(clean_record)
 
     def transform(self, validated_record: RssEntrySchema) -> UnifiedDataInput:
-        """Transform RSS entry to unified schema."""
+        """Transform RSS entry to unified schema with identity resolution."""
         # Combine summary and content
         content = validated_record.content or validated_record.summary
+        
+        # For RSS entries, use entry_id as canonical ID
+        # Hash long URLs to keep canonical_id manageable
+        import hashlib
+        entry_hash = hashlib.md5(validated_record.entry_id.encode()).hexdigest()[:12]
+        canonical_id = f"rss_{entry_hash}"
 
         return UnifiedDataInput(
             source=self.source_type,
             source_id=validated_record.entry_id,
+            canonical_id=canonical_id,
+            symbol=None,  # Not applicable for news
             title=validated_record.title,
             content=content,
             author=validated_record.author,

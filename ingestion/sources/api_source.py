@@ -131,10 +131,16 @@ class ApiSource(BaseSource[ApiPostSchema]):
         return ApiPostSchema.model_validate(record)
 
     def transform(self, validated_record: ApiPostSchema) -> UnifiedDataInput:
-        """Transform API record to unified schema."""
+        """Transform API record to unified schema with identity resolution."""
+        # For legacy API posts, use source-prefixed ID as canonical ID
+        # (no cross-source matching for JSONPlaceholder posts)
+        canonical_id = f"api_post_{validated_record.id}"
+        
         return UnifiedDataInput(
             source=self.source_type,
             source_id=str(validated_record.id),
+            canonical_id=canonical_id,
+            symbol=None,  # Not applicable for posts
             title=validated_record.title,
             content=validated_record.body,
             author=f"user_{validated_record.user_id}",

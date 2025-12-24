@@ -15,6 +15,7 @@ from core.config import get_settings
 from core.logging import get_logger
 from ingestion.sources.base import BaseSource, FetchResult, SourceConfig
 from schemas.etl import CoinGeckoSchema, UnifiedDataInput
+from services.identity_resolver import get_identity_resolver
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -34,6 +35,7 @@ class CoinGeckoSource(BaseSource[CoinGeckoSchema]):
                 rate_limit_per_minute=30,  # Conservative for free tier
             )
         super().__init__(config)
+        self.identity_resolver = get_identity_resolver()
 
     @property
     def source_type(self) -> str:
@@ -127,10 +129,20 @@ class CoinGeckoSource(BaseSource[CoinGeckoSchema]):
         return CoinGeckoSchema.model_validate(record)
 
     def transform(self, validated_record: CoinGeckoSchema) -> UnifiedDataInput:
-        """Transform CoinGecko record to unified schema."""
+        """Transform CoinGecko record to unified schema with identity resolution."""
+        # Generate canonical ID for identity unification
+        canonical_id = self.identity_resolver.get_canonical_id(
+            source=self.source_type,
+            source_id=validated_record.id,
+            symbol=validated_record.symbol,
+            name=validated_record.name,
+        )
+        
         return UnifiedDataInput(
             source=self.source_type,
             source_id=validated_record.id,
+            canonical_id=canonical_id,  # Enables cross-source unification
+            symbol=validated_record.symbol.lower(),
             title=validated_record.name,
             content=f"{validated_record.symbol.upper()} - Rank #{validated_record.market_cap_rank or 'N/A'}",
             author=None,
@@ -151,6 +163,7 @@ class CoinGeckoSource(BaseSource[CoinGeckoSchema]):
                 "ath": validated_record.ath,
                 "ath_date": validated_record.ath_date.isoformat() if validated_record.ath_date else None,
                 "image": validated_record.image,
+                "_source": "coingecko",  # Track data source
             },
             checksum=self.compute_checksum(validated_record.model_dump()),
         )
@@ -158,3 +171,4 @@ class CoinGeckoSource(BaseSource[CoinGeckoSchema]):
     def get_checkpoint_value(self, record: dict[str, Any]) -> str:
         """Extract coin ID as checkpoint value."""
         return record.get("id", "")
+

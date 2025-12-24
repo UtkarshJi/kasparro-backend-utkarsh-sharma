@@ -105,13 +105,22 @@ class RawRssData(Base):
 
 
 class UnifiedData(Base):
-    """Normalized data from all sources."""
+    """Normalized data from all sources with identity unification.
+    
+    The canonical_id field enables merging of the same cryptocurrency from
+    different sources. For example, Bitcoin from both CoinPaprika and CoinGecko
+    will have canonical_id='btc' and be unified into a single record.
+    """
 
     __tablename__ = "unified_data"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
-    # Source tracking
+    # Identity unification - canonical_id is the key for merging
+    canonical_id: Mapped[str] = mapped_column(String(100), index=True)
+    symbol: Mapped[Optional[str]] = mapped_column(String(50), nullable=True, index=True)
+
+    # Source tracking (tracks which sources contributed to this record)
     source: Mapped[str] = mapped_column(String(50), index=True)
     source_id: Mapped[str] = mapped_column(String(255), index=True)
 
@@ -133,14 +142,17 @@ class UnifiedData(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
 
-    # Additional data as JSON
+    # Additional data as JSON (contains merged data from all sources)
     extra_data: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, nullable=True)
 
     # Deduplication
     checksum: Mapped[str] = mapped_column(String(64), index=True)
 
     __table_args__ = (
-        Index("ix_unified_source_id", "source", "source_id", unique=True),
+        # Unique constraint on canonical_id - enables identity unification
+        # Same canonical_id from different sources will update the same record
+        Index("ix_unified_canonical_id", "canonical_id", unique=True),
+        Index("ix_unified_source_id", "source", "source_id"),
         Index("ix_unified_ingested_at", "ingested_at"),
     )
 
